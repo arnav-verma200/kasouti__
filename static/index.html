@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kasauti — Agentic Retail OS</title>
+  <!-- SEO tags -->
+  <meta name="description" content="Premium Luxury Jewelry Workshop Agent Orchestration Dashboard - Kasauti Retail OS.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- HEADER BAR -->
+    <header class="header-bar">
+      <div class="brand">
+        <span class="gold-dot"></span>
+        <h1 class="logo">KASAUTI <span class="logo-sub">· AGENTIC RETAIL OS</span></h1>
+      </div>
+      
+      <div class="header-right">
+        <!-- Live spot rate ticker -->
+        <div class="rate-ticker" id="rateTicker">
+          <div class="ticker-item" data-metal="gold">
+            <span class="ticker-label">AU (GOLD)</span>
+            <span class="ticker-value" id="goldRateVal">—</span>
+          </div>
+          <div class="ticker-item" data-metal="silver">
+            <span class="ticker-label">AG (SILVER)</span>
+            <span class="ticker-value" id="silverRateVal">—</span>
+          </div>
+          <button class="currency-toggle" id="currencyToggleBtn" title="Toggle USD / INR">USD</button>
+        </div>
+        
+        <button class="icon-btn" id="feedSettingsBtn" title="Feed Configuration">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          Configure Feed
+        </button>
+
+        <button class="icon-btn reset-btn" id="systemResetBtn" title="Reset all state to seeds">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+          Reset OS
+        </button>
+      </div>
+    </header>
+
+    <!-- MAIN DASHBOARD CONTENT -->
+    <main class="dashboard-grid">
+      
+      <!-- COLUMN 1: INTAKE & GAUGES -->
+      <section class="panel-column col-left">
+        <!-- CUSTOMER INTAKE PANEL (Signature Glassmorphic panel) -->
+        <div class="panel glassmorphic-panel" id="intakePanel">
+          <h2 class="section-title"><span class="accent-text">I.</span> Customer Intake</h2>
+          
+          <!-- Autocomplete list for customer name -->
+          <datalist id="vipNames">
+            <option value="Maharani Gayatri Devi"></option>
+            <option value="Rajkumari Indira"></option>
+            <option value="Yuvaraj Vikram"></option>
+            <option value="Seth Hiralal"></option>
+            <option value="Begum Hazrat Mahal"></option>
+          </datalist>
+          
+          <!-- Tab Navigation -->
+          <div class="tabs-nav">
+            <button type="button" class="tab-btn active" data-tab="tab-standard">Standard Template</button>
+            <button type="button" class="tab-btn" data-tab="tab-custom">Bespoke Custom</button>
+            <button type="button" class="tab-btn" data-tab="tab-handoff">Karigar Handoff</button>
+          </div>
+
+          <!-- Tab Content 1: Standard Order -->
+          <div class="tab-content active" id="tab-standard">
+            <form id="stdIntakeForm" class="form-container">
+              <div class="form-group">
+                <label for="stdCustomerName">Customer Name</label>
+                <input type="text" id="stdCustomerName" required placeholder="e.g. Maharani Gayatri Devi" list="vipNames">
+              </div>
+
+              <!-- Preconfigured cards grid -->
+              <div class="form-group">
+                <label>Select Design Template</label>
+                <div class="templates-grid" id="templatesGrid">
+                  <!-- Filled dynamically on app.js load, seed buttons here for fallback -->
+                  <button type="button" class="template-card-btn active" data-template="Classic Solitaire Engagement Ring">
+                    <span class="template-card-name">Solitaire Ring</span>
+                    <span class="template-card-desc">4.5g · Gold · Stone-Setting</span>
+                  </button>
+                  <button type="button" class="template-card-btn" data-template="Royal Filigree Bridal Set">
+                    <span class="template-card-name">Bridal Set</span>
+                    <span class="template-card-desc">35.0g · Gold · Filigree</span>
+                  </button>
+                  <button type="button" class="template-card-btn" data-template="Heritage Gold Kada">
+                    <span class="template-card-name">Heritage Kada</span>
+                    <span class="template-card-desc">20.0g · Gold · Polishing</span>
+                  </button>
+                  <button type="button" class="template-card-btn custom-trigger-btn" id="customOrderCardBtn">
+                    <span class="template-card-name" style="color: var(--accent-gold);">Custom Order</span>
+                    <span class="template-card-desc">Bespoke specs & uploads</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Quick chips selector for metal type -->
+              <div class="form-row">
+                <div class="form-group half">
+                  <label>Metal Type</label>
+                  <div class="chip-group" id="stdMetalChips">
+                    <button type="button" class="chip-btn active" data-val="Gold">Gold</button>
+                    <button type="button" class="chip-btn" data-val="Silver">Silver</button>
+                  </div>
+                </div>
+                <div class="form-group half">
+                  <label>Karat / Purity</label>
+                  <div class="chip-group" id="stdPurityChips">
+                    <!-- filled dynamically -->
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick chips for gemstone selection -->
+              <div class="form-group">
+                <label>Gemstone</label>
+                <div class="chip-group" id="stdGemChips">
+                  <button type="button" class="chip-btn active" data-val="None">None</button>
+                  <button type="button" class="chip-btn" data-val="Diamond">Diamond</button>
+                  <button type="button" class="chip-btn" data-val="Ruby">Ruby</button>
+                  <button type="button" class="chip-btn" data-val="Emerald">Emerald</button>
+                  <button type="button" class="chip-btn" data-val="Sapphire">Sapphire</button>
+                </div>
+              </div>
+
+              <!-- Quick chips for size selection -->
+              <div class="form-group">
+                <label>Size / Dimensions</label>
+                <div class="chip-group" id="stdSizeChips">
+                  <!-- filled dynamically based on template type -->
+                </div>
+              </div>
+
+              <!-- Weight adjustments (tap-friendly weight adjustment inputs) -->
+              <div class="form-row">
+                <div class="form-group half">
+                  <label>Weight Adjust (g)</label>
+                  <div class="voice-input-wrapper" style="align-items: center;">
+                    <button type="button" class="chip-btn" id="weightMinusBtn" style="padding: 0.35rem 0.65rem; font-weight: bold; font-size: 0.9rem;">-</button>
+                    <input type="number" id="stdWeightG" required step="0.1" min="0.1" placeholder="4.5" style="text-align: center; width: 80px; flex: unset; margin: 0 0.2rem;">
+                    <button type="button" class="chip-btn" id="weightPlusBtn" style="padding: 0.35rem 0.65rem; font-weight: bold; font-size: 0.9rem;">+</button>
+                  </div>
+                </div>
+                <div class="form-group half">
+                  <label for="stdDeadlineDays">Deadline (Days)</label>
+                  <input type="number" id="stdDeadlineDays" required min="1" value="14">
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="stdCustomerBudget">Target Budget (USD)</label>
+                  <input type="number" id="stdCustomerBudget" placeholder="Standard Pricing (+22%)" min="0" step="1">
+                </div>
+                <!-- Hidden fields for Standard Order derived properties -->
+                <input type="hidden" id="stdComplexity" value="medium">
+                <input type="hidden" id="stdTechnique" value="stone-setting">
+              </div>
+
+              <button type="submit" class="submit-btn" id="stdSubmitBtn">
+                <span>Initiate Standard Order</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+            </form>
+          </div>
+
+          <!-- Tab Content 2: Bespoke Custom Order -->
+          <div class="tab-content" id="tab-custom">
+            <form id="customIntakeForm" class="form-container">
+              <div class="form-group">
+                <label for="custCustomerName">Customer Name</label>
+                <input type="text" id="custCustomerName" required placeholder="e.g. Maharani Gayatri Devi" list="vipNames">
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="custMetalType">Metal Type</label>
+                  <select id="custMetalType">
+                    <option value="Gold" selected>Gold (Au)</option>
+                    <option value="Silver">Silver (Ag)</option>
+                  </select>
+                </div>
+                <div class="form-group half">
+                  <label for="custKaratPurity">Karat / Purity</label>
+                  <select id="custKaratPurity">
+                    <!-- filled dynamically in app.js -->
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group third">
+                  <label for="custWeightG">Weight (g)</label>
+                  <input type="number" id="custWeightG" required step="0.1" min="0.1" placeholder="25.0" value="15.0">
+                </div>
+                <div class="form-group third">
+                  <label for="custComplexity">Complexity</label>
+                  <select id="custComplexity">
+                    <option value="low">Low</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+                <div class="form-group third">
+                  <label for="custTechnique">Technique</label>
+                  <select id="custTechnique">
+                    <option value="filigree" selected>Filigree</option>
+                    <option value="stone-setting">Stone Setting</option>
+                    <option value="polishing">Polishing</option>
+                    <option value="engraving">Engraving</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Real-time Atelier Estimator box (Sets expectations for pricing/time) -->
+              <div class="estimator-box">
+                <span class="estimator-title">Atelier Estimation</span>
+                <div class="estimator-values">
+                  <div class="est-val-box">
+                    <div class="est-num" id="estTrueCost">$0.00</div>
+                    <div class="est-lbl">Base Cost</div>
+                  </div>
+                  <div class="est-val-box">
+                    <div class="est-num" id="estTimeline">0 days</div>
+                    <div class="est-lbl">Fabrication Time</div>
+                  </div>
+                  <div class="est-val-box">
+                    <div class="est-num" id="estRetail">$0.00</div>
+                    <div class="est-lbl">Est. Retail (+22%)</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Reference image drag zone -->
+              <div class="form-group">
+                <label>Reference Sketch / Photo Upload</label>
+                <div class="dropzone" id="refDropzone">
+                  <span class="dropzone-text" id="dropzoneText">Drag and drop sketch, or click to upload</span>
+                  <input type="file" id="refFileInput" accept="image/*" style="display: none;">
+                  <div class="dropzone-preview" id="refPreviewContainer">
+                    <img src="" id="refPreviewImg" alt="Reference Sketch Preview">
+                    <button type="button" class="remove-img-btn" id="refRemoveImgBtn">&times;</button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Voice capture transcription details -->
+              <div class="form-group">
+                <label for="custNotes">Bespoke Design Crafting Notes</label>
+                <div class="voice-input-wrapper">
+                  <textarea id="custNotes" rows="3" required placeholder="Specify detailed customer requests, engraving text, or specific sizes... Speak notes using mic button."></textarea>
+                  <button type="button" class="mic-btn" id="notesVoiceBtn" title="Dictate notes (Speech-to-text)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group half">
+                  <label for="custCustomerBudget">Target Budget (USD)</label>
+                  <input type="number" id="custCustomerBudget" placeholder="Standard Pricing (+22%)" min="0" step="1">
+                </div>
+                <div class="form-group half">
+                  <label for="custDeadlineDays">Deadline (Days)</label>
+                  <input type="number" id="custDeadlineDays" required min="1" value="21">
+                </div>
+              </div>
+
+              <button type="submit" class="submit-btn" id="custSubmitBtn" style="background-color: var(--accent-gold-dark); color: var(--text-primary);">
+                <span>Initiate Custom Cycle</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+
+              <!-- Escalation Section -->
+              <div class="form-group" style="margin-top: 0.5rem; margin-bottom: 0.5rem;">
+                <button type="button" class="submit-btn" id="customCallKarigarBtn" style="background-color: var(--color-amber); color: var(--bg-main); font-weight: bold; margin-top: 0;">
+                  <span>Call the Head Karigar (Bypass standard workflow)</span>
+                </button>
+                
+                <!-- Collapsed outcome resolution form -->
+                <div id="karigarOutcomeSection" style="display: none; margin-top: 0.8rem; padding: 1rem; border: 1px solid var(--border-active); border-radius: 6px; background: rgba(197, 168, 128, 0.05);">
+                  <h4 style="color: var(--accent-gold); margin-bottom: 0.6rem; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05rem;">Atelier Escalation Resolution</h4>
+                  <input type="hidden" id="karigarHandoffId">
+                  <div class="form-group" style="margin-bottom: 0.6rem;">
+                    <label for="karigarAgreedPrice">Agreed Price (USD)</label>
+                    <input type="number" id="karigarAgreedPrice" min="1" step="0.01" placeholder="e.g. 1250">
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0.8rem;">
+                    <label for="karigarOutcomeNotes">Resolution / Outcome Notes</label>
+                    <input type="text" id="karigarOutcomeNotes" placeholder="e.g. Handcrafted floral border approved.">
+                  </div>
+                  <button type="button" class="submit-btn" id="submitKarigarOutcomeBtn" style="margin-top: 0; padding: 0.55rem; font-size: 0.8rem;">
+                    Submit Karigar Resolution
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Tab Content 3: Call the Head Karigar Handoff -->
+          <div class="tab-content" id="tab-handoff">
+            <form id="handoffIntakeForm" class="form-container">
+              <div class="handoff-card">
+                <h3 class="handoff-title">Atelier Handoff Gate — Shankar Das</h3>
+                <p class="handoff-desc">For complex orders, custom shape molds, or heirloom rebuilds that cannot be fully digitized by the sales staff. Shifting design work to the expert master craftsman शंकर दास.</p>
+              </div>
+
+              <div class="form-group">
+                <label for="handCustomerName">Customer Name</label>
+                <input type="text" id="handCustomerName" required placeholder="e.g. Maharani Gayatri Devi" list="vipNames">
+              </div>
+
+              <div class="form-group">
+                <label for="handNotes">Handoff Exception Memo</label>
+                <textarea id="handNotes" rows="4" required placeholder="Describe the bespoke complexities requesting immediate physical inspection (e.g. Shank thickness, custom wax carving, matching specific stone clusters)..."></textarea>
+              </div>
+
+              <button type="submit" class="submit-btn" id="handSubmitBtn" style="background-color: var(--color-amber); color: var(--bg-main);">
+                <span>Route to Shankar Das (Log exception)</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+        
+        <!-- CATALOG STANDARD TEMPLATES -->
+        <div class="panel col-catalog" id="catalogPanel">
+          <h2 class="section-title"><span class="accent-text">VIII.</span> Catalog Standard Templates</h2>
+          <div class="catalog-list" id="catalogContainer">
+            <!-- populated dynamically -->
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUMN 2: ORCHESTRATION & AUDIT -->
+      <section class="panel-column col-center">
+        <!-- MASTER ORCHESTRATION VISUALIZER -->
+        <div class="panel orchestrator-panel" id="orchestratorPanel">
+          <h2 class="section-title"><span class="accent-text">III.</span> Master Agentic Orchestration</h2>
+          <div class="visualizer-container">
+            <svg id="visualizerGraph" width="100%" height="220" viewBox="0 0 600 220">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#44464f" />
+                </marker>
+                <marker id="arrow-active" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 1 L 10 5 L 0 9 z" fill="#C5A880" />
+                </marker>
+                <filter id="glow-gold" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              
+              <!-- Connection Lines (edges) -->
+              <path id="edge-intake-sales" d="M 80 110 L 170 60" class="graph-edge" marker-end="url(#arrow)" />
+              <path id="edge-sales-costing" d="M 230 60 L 320 60" class="graph-edge" marker-end="url(#arrow)" />
+              <path id="edge-costing-production" d="M 380 60 L 470 60" class="graph-edge" marker-end="url(#arrow)" />
+              <path id="edge-costing-override" d="M 350 90 L 350 140" class="graph-edge" marker-end="url(#arrow)" />
+              <path id="edge-production-orchestrator" d="M 500 90 L 500 140" class="graph-edge" marker-end="url(#arrow)" />
+              <path id="edge-override-orchestrator" d="M 380 170 L 470 170" class="graph-edge" marker-end="url(#arrow)" />
+              <path id="edge-orchestrator-ledger" d="M 530 170 L 580 170" class="graph-edge" marker-end="url(#arrow)" />
+              
+              <!-- Nodes -->
+              <!-- Intake Gate -->
+              <g id="node-intake" class="graph-node idle">
+                <circle cx="50" cy="110" r="30" class="node-circle" />
+                <text x="50" y="114" class="node-label">INTAKE</text>
+              </g>
+              
+              <!-- Sales Evaluation -->
+              <g id="node-sales" class="graph-node idle">
+                <circle cx="200" cy="60" r="30" class="node-circle" />
+                <text x="200" y="64" class="node-label">SALES</text>
+              </g>
+              
+              <!-- Costing Recalc -->
+              <g id="node-costing" class="graph-node idle">
+                <circle cx="350" cy="60" r="30" class="node-circle" />
+                <text x="350" y="64" class="node-label">COSTING</text>
+              </g>
+              
+              <!-- Production Feasibility -->
+              <g id="node-production" class="graph-node idle">
+                <circle cx="500" cy="60" r="30" class="node-circle" />
+                <text x="500" y="64" class="node-label">PRODUCTION</text>
+              </g>
+              
+              <!-- Human Override Gate -->
+              <g id="node-override" class="graph-node idle">
+                <circle cx="350" cy="170" r="30" class="node-circle" />
+                <text x="350" y="174" class="node-label">OVERRIDE</text>
+              </g>
+              
+              <!-- Master Orchestrator -->
+              <g id="node-orchestrator" class="graph-node idle">
+                <circle cx="500" cy="170" r="30" class="node-circle" />
+                <text x="500" y="174" class="node-label">ORCHESTRATOR</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        
+        <!-- SYSTEM AUDIT TRAIL -->
+        <div class="panel terminal-panel" id="auditPanel">
+          <div class="terminal-header">
+            <div class="window-buttons">
+              <span class="win-btn red"></span>
+              <span class="win-btn yellow"></span>
+              <span class="win-btn green"></span>
+            </div>
+            <div class="terminal-title">AUDIT_LOG_STREAM</div>
+            <div class="terminal-meta">KASAUTI_SECURE_V1</div>
+          </div>
+          <div class="terminal-body" id="auditTerminal">
+            <!-- loaded dynamically -->
+          </div>
+        </div>
+
+        <!-- LEDGER RESOLVED LOG -->
+        <div class="panel col-ledger" id="ledgerPanel">
+          <div class="ledger-header-wrap">
+            <h2 class="section-title"><span class="accent-text">X.</span> Master Ledger Resolved Orders</h2>
+            <div class="notion-badge">
+              <span class="dot-amber"></span>
+              Notion sync: not configured
+            </div>
+          </div>
+          <div class="ledger-table-wrap">
+            <table class="ledger-table" id="ledgerTable">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Timestamp</th>
+                  <th>Customer</th>
+                  <th>Specs</th>
+                  <th>Quote (USD)</th>
+                  <th>Final (USD)</th>
+                  <th>True Cost</th>
+                  <th>Margin</th>
+                  <th>Spot Rate</th>
+                  <th>INR Value</th>
+                  <th>Trust Impact</th>
+                  <th>Pathway</th>
+                  <th>Memo/Operator Notes</th>
+                </tr>
+              </thead>
+              <tbody id="ledgerBody">
+                <!-- populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- COLUMN 3: BLUEPRINT & ARTISANS -->
+      <section class="panel-column col-right">
+        <!-- LIVE CRAFTING BLUEPRINT -->
+        <div class="panel blueprint-panel" id="blueprintPanel">
+          <h2 class="section-title"><span class="accent-text">IV.</span> CAD Blueprint</h2>
+          <div class="blueprint-canvas-wrap">
+            <svg id="blueprintCanvas" width="100%" height="240" viewBox="0 0 300 240">
+              <!-- Grid pattern background -->
+              <defs>
+                <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                  <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#162c26" stroke-width="0.5"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#grid)" />
+              
+              <!-- Scale CAD label -->
+              <text x="15" y="25" class="bp-tag">CAD SCALE 1:1</text>
+              <text x="285" y="25" class="bp-tag right-align" id="bpAtelierStamp">ATELIER STAMP // ACTIVE</text>
+              
+              <!-- Target drawing container -->
+              <g id="blueprintDrawings">
+                <!-- dynamic paths inserted here -->
+              </g>
+              
+              <!-- Spec tag overlays -->
+              <g class="bp-spec-info">
+                <text x="15" y="210" class="bp-spec-lbl" id="bpSpecMetal">METAL: GOLD (22K)</text>
+                <text x="15" y="225" class="bp-spec-lbl" id="bpSpecWeight">WEIGHT: 35.0 g</text>
+                <text x="285" y="225" class="bp-spec-lbl right-align" id="bpSpecTechnique">TECHNIQUE: FILIGREE</text>
+              </g>
+            </svg>
+          </div>
+        </div>
+        
+        <!-- WORKSHOP ARTISAN QUEUE -->
+        <div class="panel" id="artisanPanel">
+          <h2 class="section-title"><span class="accent-text">VII.</span> Workshop Artisan Queue</h2>
+          <div class="artisans-grid" id="artisansContainer">
+            <!-- populated dynamically -->
+          </div>
+        </div>
+
+        <!-- AGENT TRUST SCORES -->
+        <div class="panel" id="trustPanel">
+          <h2 class="section-title"><span class="accent-text">V.</span> Agent Trust Safety</h2>
+          <div class="gauges-container">
+            <!-- Sales Agent Gauge -->
+            <div class="gauge-card" id="gaugeSales">
+              <div class="gauge-svg-wrap">
+                <svg viewBox="0 0 100 100" class="gauge-svg">
+                  <circle cx="50" cy="50" r="42" class="gauge-bg"></circle>
+                  <circle cx="50" cy="50" r="42" class="gauge-fill" stroke-dasharray="264" stroke-dashoffset="264" id="gaugeSalesFill"></circle>
+                  <text x="50" y="55" class="gauge-text" id="gaugeSalesText">—</text>
+                </svg>
+              </div>
+              <div class="gauge-label">Sales Agent</div>
+              <span class="badge" id="badgeSales">VERIFY LOCK</span>
+            </div>
+            
+            <!-- Costing Agent Gauge -->
+            <div class="gauge-card" id="gaugeCosting">
+              <div class="gauge-svg-wrap">
+                <svg viewBox="0 0 100 100" class="gauge-svg">
+                  <circle cx="50" cy="50" r="42" class="gauge-bg"></circle>
+                  <circle cx="50" cy="50" r="42" class="gauge-fill" stroke-dasharray="264" stroke-dashoffset="264" id="gaugeCostingFill"></circle>
+                  <text x="50" y="55" class="gauge-text" id="gaugeCostingText">—</text>
+                </svg>
+              </div>
+              <div class="gauge-label">Costing Agent</div>
+              <span class="badge" id="badgeCosting">VERIFY LOCK</span>
+            </div>
+            
+            <!-- Production Agent Gauge -->
+            <div class="gauge-card" id="gaugeProduction">
+              <div class="gauge-svg-wrap">
+                <svg viewBox="0 0 100 100" class="gauge-svg">
+                  <circle cx="50" cy="50" r="42" class="gauge-bg"></circle>
+                  <circle cx="50" cy="50" r="42" class="gauge-fill" stroke-dasharray="264" stroke-dashoffset="264" id="gaugeProductionFill"></circle>
+                  <text x="50" y="55" class="gauge-text" id="gaugeProductionText">—</text>
+                </svg>
+              </div>
+              <div class="gauge-label">Production</div>
+              <span class="badge" id="badgeProduction">VERIFY LOCK</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- FEED SETTINGS MODAL -->
+    <div class="modal-overlay" id="feedModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3>Market Feed Settings</h3>
+          <button class="modal-close" id="feedModalCloseBtn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="toggle-group">
+            <label class="switch">
+              <input type="checkbox" id="modalFeedOnline">
+              <span class="slider"></span>
+            </label>
+            <span class="toggle-label">External Spot Feed (Live simulated jitter)</span>
+          </div>
+          
+          <div class="form-group">
+            <label for="modalGoldSpot">Manual Gold Base Rate (USD/g)</label>
+            <input type="number" id="modalGoldSpot" step="0.01" min="1">
+          </div>
+          
+          <div class="form-group">
+            <label for="modalSilverSpot">Manual Silver Base Rate (USD/g)</label>
+            <input type="number" id="modalSilverSpot" step="0.01" min="0.1">
+          </div>
+          
+          <div class="form-group">
+            <label for="modalUsdInr">USD → INR Exchange Multiplier</label>
+            <input type="number" id="modalUsdInr" step="0.1" min="1">
+          </div>
+          
+          <button class="modal-save-btn" id="modalSaveSettingsBtn">Apply Feed Configuration</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HUMAN OVERRIDE DRAWER -->
+    <div class="drawer-overlay" id="approvalDrawer">
+      <div class="drawer-card">
+        <div class="drawer-header">
+          <h3>Operator Verification Gate</h3>
+          <span class="critical-badge" id="drawerCritBadge">CRITICAL OVERRIDE</span>
+        </div>
+        <div class="drawer-body">
+          <div class="spec-summary-box">
+            <div class="spec-row">
+              <span class="spec-label">Order ID:</span>
+              <span class="spec-val font-mono" id="drawerOrderId">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Customer Name:</span>
+              <span class="spec-val" id="drawerCustName">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Specification:</span>
+              <span class="spec-val" id="drawerMetalSpec">—</span>
+            </div>
+            <div class="spec-row">
+              <span class="spec-label">Safety Lock Trigger:</span>
+              <span class="spec-val text-danger font-mono" id="drawerReason">—</span>
+            </div>
+          </div>
+
+          <!-- Production & Queue Status Badges (horizontal quick-glance status badges) -->
+          <div class="production-metrics-title">Atelier Metrics & Production Status</div>
+          <div class="production-metrics-row" id="drawerMetricsRow">
+            <div class="metric-badge mbadge-artisan" id="mbadgeArtisan">
+              <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+              <div class="metric-info">
+                <span class="metric-lbl">Lead Artisan</span>
+                <span class="metric-val" id="mbadgeArtisanVal">Unassigned</span>
+              </div>
+            </div>
+            <div class="metric-badge mbadge-backlog" id="mbadgeBacklog">
+              <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+              <div class="metric-info">
+                <span class="metric-lbl">Queue Backlog</span>
+                <span class="metric-val" id="mbadgeBacklogVal">0 days</span>
+              </div>
+            </div>
+            <div class="metric-badge mbadge-timeline" id="mbadgeTimeline">
+              <svg class="metric-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <div class="metric-info">
+                <span class="metric-lbl">Craft & QC</span>
+                <span class="metric-val" id="mbadgeTimelineVal">Standard</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Side-by-side Pricing Hierarchy Anchor Row -->
+          <div class="pricing-anchor-row">
+            <div class="price-anchor-card anchor-adjusted" id="anchorAdjustedCard">
+              <div class="price-input-large-wrap">
+                <span class="price-currency-symbol">$</span>
+                <input type="number" id="overrideAdjustedPrice" step="0.01" min="1" required class="price-input-large">
+              </div>
+              <div class="price-anchor-lbl">Adjusted Sales Price</div>
+            </div>
+            <div class="price-anchor-card anchor-suggested" id="anchorSuggestedCard">
+              <div class="price-val-large" id="drawerSuggestedVal">$0.00</div>
+              <div class="price-anchor-lbl">Suggested Minimum Price</div>
+            </div>
+          </div>
+
+          <!-- Secondary details overlay -->
+          <div class="secondary-pricing-row" style="display: flex; gap: 0.5rem; margin-top: 0.5rem; font-size: 0.7rem; justify-content: space-between;">
+            <div class="secondary-price-box">Original Proposed: <span id="drawerProposedVal" style="font-weight: bold;">$0.00</span></div>
+            <div class="secondary-price-box">True Cost Recalc: <span id="drawerTrueCostVal" style="font-weight: bold;">$0.00</span></div>
+            <!-- Keep for backward compatibility -->
+            <span id="drawerSuggestedValDisplay" style="display: none;">$0.00</span>
+          </div>
+
+          <form id="overrideForm" style="margin-top: 0.8rem;">
+            <!-- Multi-select justification override chips -->
+            <div class="form-group" style="margin-top: 0.5rem;">
+              <label>Justification Override Reason (Select one or more)</label>
+              <div class="chip-group" id="overrideReasonChips" style="margin-top: 0.3rem; margin-bottom: 0.5rem; display: flex; gap: 0.4rem; flex-wrap: wrap;">
+                <button type="button" class="chip-btn" data-val="VIP Status">VIP Status</button>
+                <button type="button" class="chip-btn" data-val="Margin Approved">Margin Approved</button>
+                <button type="button" class="chip-btn" data-val="Repeat Customer">Repeat Customer</button>
+                <button type="button" class="chip-btn" data-val="Festival Offer">Festival Offer</button>
+                <button type="button" class="chip-btn" data-val="Manager Exception">Manager Exception</button>
+              </div>
+              
+              <!-- Optional single-line text details -->
+              <div class="form-group" id="memoTextGroup" style="margin-top: 0.5rem;">
+                <label for="overrideOptionalNote">Additional Justification notes (Optional)</label>
+                <input type="text" id="overrideOptionalNote" placeholder="Specify details for audit ledger..." style="width: 100%; box-sizing: border-box;">
+                <!-- Keep for backward compatibility -->
+                <input type="hidden" id="overrideMemo">
+              </div>
+            </div>
+            
+            <div class="drawer-actions">
+              <button type="button" class="drawer-btn approve-btn" id="drawerApproveBtn">
+                Sign-off & Execute Order
+              </button>
+              <button type="button" class="drawer-btn reject-btn" id="drawerRejectBtn">
+                Cancel & Reject Order
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- TRANSACTION RECEIPT & ATELIER DISPATCH OVERLAY -->
+    <div class="receipt-overlay" id="receiptOverlay">
+      <div class="receipt-card">
+        <div class="receipt-header">
+          <h3 class="receipt-title">Transaction Receipt & Workshop Dispatch</h3>
+          <button class="receipt-close-btn" id="receiptCloseBtn">&times;</button>
+        </div>
+        
+        <div class="receipt-slips-container">
+          <!-- Customer Receipt -->
+          <div class="slip-box">
+            <div class="slip-title">
+              <span>CUSTOMER SALES RECEIPT</span>
+              <span id="rcptOrderType">STANDARD ORDER</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Order Reference:</span>
+              <span id="rcptOrderId" class="font-mono">KAS-1001</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Customer:</span>
+              <span id="rcptCustomerName" style="font-weight: bold;">Gayatri Devi</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Item Spec:</span>
+              <span id="rcptSpecs">4.5g 18K Gold (Stone Setting)</span>
+            </div>
+            <div class="slip-row" id="rcptGemRow">
+              <span class="light-text">Gemstone Surcharge:</span>
+              <span id="rcptGemVal">$150.00 (Diamond)</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Live Metal Rate:</span>
+              <span id="rcptSpotRate">$78.50/g (Gold)</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Resolution Pathway:</span>
+              <span id="rcptPathway" class="font-mono">Auto-Executed</span>
+            </div>
+            <div class="slip-row total">
+              <span>TOTAL CHARGE (USD):</span>
+              <span id="rcptTotalUsd">$0.00</span>
+            </div>
+            <div class="slip-row total" style="border-top: none; padding-top: 0; margin-top: 0;">
+              <span>TOTAL CHARGE (INR):</span>
+              <span id="rcptTotalInr">₹0.00</span>
+            </div>
+          </div>
+
+          <!-- Workshop SOP Dispatch Slip -->
+          <div class="slip-box" style="border-color: var(--border-active);">
+            <div class="slip-title">
+              <span>WORKSHOP DISPATCH INSTRUCTIONS (SOP)</span>
+              <span>ATELIER ATTESTED</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Allocated Artisan:</span>
+              <span id="rcptArtisan" style="font-weight: bold;">Shankar Das</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Target Deadline:</span>
+              <span id="rcptDeadline">14 days</span>
+            </div>
+            <div class="slip-row">
+              <span class="light-text">Size / Dimensions:</span>
+              <span id="rcptSize" class="font-mono">Ring Size 7</span>
+            </div>
+            
+            <!-- Reference sketch / image path for workshop if custom -->
+            <div id="rcptSketchRow" style="margin: 0.5rem 0; display: none; text-align: center;">
+              <span class="light-text" style="display: block; font-size: 0.65rem; margin-bottom: 0.25rem; text-align: left;">Reference Design Photo:</span>
+              <img id="rcptSketchImg" src="" style="max-height: 100px; border-radius: 4px; border: 1px solid var(--border-active);">
+            </div>
+
+            <div style="margin-top: 0.6rem;">
+              <span class="light-text" style="font-size: 0.65rem; text-transform: uppercase; font-weight: bold; display: block; margin-bottom: 0.3rem;">Standard Operating Procedure (SOP) Checklist:</span>
+              <div class="sop-step">Step 1: Metal prep (Melt & alloy target purity material).</div>
+              <div class="sop-step">Step 2: Base layout framing & sizing base band.</div>
+              <div class="sop-step">Step 3: Detail carving / surface layout / gemstone setting.</div>
+              <div class="sop-step">Step 4: Quality Control stamp & Hallmark clearance check.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="receipt-actions">
+          <button class="receipt-btn-primary" id="receiptPrintBtn">Print Receipt & SOP Slip</button>
+          <button class="receipt-btn-secondary" id="receiptConfirmBtn">Close & Dispatch</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
