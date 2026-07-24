@@ -5,40 +5,33 @@ import random
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
 
 app = FastAPI(title="Kasauti — Agentic Retail OS")
 
-# Allow CORS for easier local testing
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Seed State
-state = {
-    "spot": {"gold_usd_g": 78.50, "silver_usd_g": 1.12, "usd_inr": 84.0, "feed_online": True},
-    "trust": {"sales": 0.82, "costing": 0.90, "production": 0.88},
-    "artisans": [
-        {"name": "Shankar Das", "specialty": "filigree", "backlog_days": 2},
-        {"name": "Vikram Verma", "specialty": "stone-setting", "backlog_days": 5},
-        {"name": "Laxman Lohar", "specialty": "polishing", "backlog_days": 0},
-        {"name": "Amit Sharma", "specialty": "engraving", "backlog_days": 6},
-    ],
-    "catalog": [
-        {"name": "Royal Filigree Bridal Set", "weight_g": 35.0, "complexity": "high", "technique": "filigree", "gemstone": "Ruby", "size": "Collar 420mm", "finish": "Antique"},
-        {"name": "Classic Solitaire Engagement Ring", "weight_g": 4.5, "complexity": "medium", "technique": "stone-setting", "gemstone": "Diamond", "size": "7", "finish": "High Polish"},
-        {"name": "Heritage Gold Kada", "weight_g": 20.0, "complexity": "medium", "technique": "polishing", "gemstone": "None", "size": "Diam 62mm", "finish": "Matte"},
-    ],
-    "ledger": [],       # list of resolved order records, also mirrored to data/ledger.json
-    "pending": None,    # the single order currently awaiting human override, or None
-    "audit_log": [],    # list of {ts, text} lines for the terminal-style trail
-}
+def get_initial_state() -> dict:
+    return {
+        "spot": {"gold_usd_g": 78.50, "silver_usd_g": 1.12, "usd_inr": 84.0, "feed_online": True},
+        "trust": {"sales": 0.82, "costing": 0.90, "production": 0.88},
+        "artisans": [
+            {"name": "Shankar Das", "specialty": "filigree", "backlog_days": 2},
+            {"name": "Vikram Verma", "specialty": "stone-setting", "backlog_days": 5},
+            {"name": "Laxman Lohar", "specialty": "polishing", "backlog_days": 0},
+            {"name": "Amit Sharma", "specialty": "engraving", "backlog_days": 6},
+        ],
+        "catalog": [
+            {"name": "Royal Filigree Bridal Set", "weight_g": 35.0, "complexity": "high", "technique": "filigree", "gemstone": "Ruby", "size": "Collar 420mm", "finish": "Antique"},
+            {"name": "Classic Solitaire Engagement Ring", "weight_g": 4.5, "complexity": "medium", "technique": "stone-setting", "gemstone": "Diamond", "size": "7", "finish": "High Polish"},
+            {"name": "Heritage Gold Kada", "weight_g": 20.0, "complexity": "medium", "technique": "polishing", "gemstone": "None", "size": "Diam 62mm", "finish": "Matte"},
+        ],
+        "ledger": [],       # list of resolved order records, also mirrored to data/ledger.json
+        "pending": None,    # the single order currently awaiting human override, or None
+        "audit_log": [],    # list of {ts, text} lines for the terminal-style trail
+    }
+
+state = get_initial_state()
 
 # Helper to log audit messages
 def log_audit(text: str, status: str = "SYSTEM"):
@@ -134,16 +127,10 @@ def get_gemstone_surcharge(gemstone: Optional[str]) -> float:
     if not gemstone:
         return 0.0
     g = gemstone.strip().lower()
-    if "diamond" in g:
-        return 150.0
-    elif "ruby" in g:
-        return 80.0
-    elif "emerald" in g:
-        return 90.0
-    elif "sapphire" in g:
-        return 110.0
-    elif "pearl" in g:
-        return 40.0
+    surcharges = {"diamond": 150.0, "ruby": 80.0, "emerald": 90.0, "sapphire": 110.0, "pearl": 40.0}
+    for gem, charge in surcharges.items():
+        if gem in g:
+            return charge
     return 0.0
 
 def save_ledger():
@@ -183,6 +170,21 @@ class ConfigRequest(BaseModel):
     silver_usd_g: Optional[float] = None
     usd_inr: Optional[float] = None
 
+class PaymentRequest(BaseModel):
+    order_id: str
+    amount: float
+    method: Optional[str] = None
+    memo: Optional[str] = None
+
+def create_invoice(order_id: str, final_price: float) -> dict:
+    return {
+        "invoice_id": f"INV-{order_id}",
+        "payment_status": "paid" if final_price <= 0 else "unpaid",
+        "amount_paid": 0.0,
+        "tax_amount": 0.0,
+        "paid_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S") if final_price <= 0 else None
+    }
+
 # Endpoints
 @app.get("/api/dashboard")
 def get_dashboard():
@@ -220,18 +222,6 @@ def post_config(req: ConfigRequest):
 
 @app.post("/api/reset")
 def post_reset():
-    state["spot"] = {"gold_usd_g": 78.50, "silver_usd_g": 1.12, "usd_inr": 84.0, "feed_online": True}
-    state["trust"] = {"sales": 0.82, "costing": 0.90, "production": 0.88}
-    state["artisans"] = [
-        {"name": "Shankar Das", "specialty": "filigree", "backlog_days": 2},
-        {"name": "Vikram Verma", "specialty": "stone-setting", "backlog_days": 5},
-        {"name": "Laxman Lohar", "specialty": "polishing", "backlog_days": 0},
-        {"name": "Amit Sharma", "specialty": "engraving", "backlog_days": 6},
-    ]
-    state["ledger"] = []
-    state["pending"] = None
-    state["audit_log"] = []
-    
     # Remove file if it exists
     if os.path.exists("data/ledger.json"):
         try:
@@ -239,6 +229,8 @@ def post_reset():
         except Exception:
             pass
             
+    state.clear()
+    state.update(get_initial_state())
     log_audit("System Reset: All in-memory structures and local JSON ledger reset to factory seeds.", "SYSTEM")
     return {"status": "success", "message": "State reset successfully."}
 
@@ -370,7 +362,8 @@ def post_intake(req: IntakeRequest):
                     "trust_score_changes": "Sales +0.01, Cost +0.01, Prod +0.01",
                     "resolution_pathway": "Auto-Executed",
                     "approval_memo": "N/A - Autonomous execution",
-                    "status": "AUTO_CONFIRMED"
+                    "status": "AUTO_CONFIRMED",
+                    "invoice": create_invoice(order_id, proposed_price)
                 }
                 
                 # Apply trust score improvements
@@ -495,7 +488,8 @@ def post_override(req: OverrideRequest):
             "trust_score_changes": trust_changes,
             "resolution_pathway": "Human Approved",
             "approval_memo": memo_to_save,
-            "status": "RESOLVED"
+            "status": "RESOLVED",
+            "invoice": create_invoice(order_id, final_price)
         }
         
         state["ledger"].append(ledger_entry)
@@ -538,7 +532,8 @@ def post_override(req: OverrideRequest):
             "trust_score_changes": ", ".join(penalized_agents),
             "resolution_pathway": "Human Rejected",
             "approval_memo": memo_to_save,
-            "status": "RESOLVED"
+            "status": "RESOLVED",
+            "invoice": create_invoice(order_id, 0.0)
         }
         state["ledger"].append(ledger_entry)
         save_ledger()
@@ -585,7 +580,8 @@ def post_handoff(req: HandoffRequest):
         "trust_score_changes": "Sales +0.01 (Compliance Handoff)",
         "resolution_pathway": "Karigar Handoff",
         "approval_memo": req.notes,
-        "status": "PENDING_HUMAN"
+        "status": "PENDING_HUMAN",
+        "invoice": create_invoice(handoff_id, 0.0)
     }
     
     # Reward compliance
@@ -616,12 +612,62 @@ def post_handoff_outcome(req: HandoffOutcomeRequest):
         "trust_score_changes": "N/A (Handoff Resolution)",
         "resolution_pathway": "Karigar Resolution",
         "approval_memo": req.notes,
-        "status": "RESOLVED"
+        "status": "RESOLVED",
+        "invoice": create_invoice(req.handoff_id, req.agreed_price)
     }
     
     state["ledger"].append(ledger_entry)
     save_ledger()
     return {"status": "handoff_outcome_completed", "handoff_id": req.handoff_id}
+
+@app.get("/api/invoice/{order_id}")
+def get_invoice(order_id: str):
+    for entry in state["ledger"]:
+        if entry["order_id"] == order_id:
+            return entry
+    raise HTTPException(status_code=404, detail="Order not found in ledger.")
+
+@app.post("/api/payment")
+def post_payment(req: PaymentRequest):
+    target_entry = None
+    for entry in state["ledger"]:
+        if entry["order_id"] == req.order_id:
+            target_entry = entry
+            break
+            
+    if not target_entry:
+        raise HTTPException(status_code=404, detail="Order not found in ledger.")
+        
+    invoice = target_entry.get("invoice")
+    if not invoice:
+        invoice = create_invoice(req.order_id, target_entry["final_price"])
+        target_entry["invoice"] = invoice
+        
+    if req.amount <= 0:
+        raise HTTPException(status_code=400, detail="Payment amount must be greater than zero.")
+        
+    total_price = target_entry["final_price"]
+    current_paid = invoice["amount_paid"]
+    remaining = round(total_price - current_paid, 2)
+    
+    if req.amount > remaining:
+        raise HTTPException(status_code=400, detail=f"Payment exceeds remaining balance. Remaining: ${remaining:.2f}")
+        
+    invoice["amount_paid"] = round(current_paid + req.amount, 2)
+    
+    if invoice["amount_paid"] >= total_price:
+        invoice["payment_status"] = "paid"
+        invoice["paid_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    elif invoice["amount_paid"] > 0:
+        invoice["payment_status"] = "partial"
+        invoice["paid_at"] = None
+    else:
+        invoice["payment_status"] = "unpaid"
+        invoice["paid_at"] = None
+        
+    log_audit(f"Payment of ${req.amount:.2f} recorded for Order {req.order_id}. New Status: {invoice['payment_status'].upper()}.", "SYSTEM")
+    save_ledger()
+    return invoice
 
 # Mount static folder
 app.mount("/static", StaticFiles(directory="static"), name="static")

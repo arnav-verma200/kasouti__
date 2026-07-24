@@ -69,3 +69,10 @@ ENV/
 
 # Local runtime data
 data/ledger.json
+
+# Local runtime upload data
+static/uploads/
+
+# Installed agent skills and customizations
+.agents/
+

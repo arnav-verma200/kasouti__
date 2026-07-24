@@ -13,30 +13,14 @@ const systemResetBtn = document.getElementById('systemResetBtn');
 
 // New global state variables
 let activeTab = 'tab-standard';
-let selectedTemplate = 'Classic Solitaire Engagement Ring';
+let selectedTemplate = '';
 let selectedMetal = 'Gold';
 let selectedPurity = '22K';
 let selectedGem = 'None';
-let selectedSize = '7';
+let selectedSize = 'Standard';
 let customImageBase64 = null;
-let recognition = null;
 let uploadedPhotoFilename = null;
 let currentSuggestedPrice = 0;
-
-// Dynamic sizes mappings
-const templateSizes = {
-  "Classic Solitaire Engagement Ring": ["5", "6", "7", "8", "9", "10"],
-  "Royal Filigree Bridal Set": ["Collar 400mm", "Collar 420mm", "Collar 450mm"],
-  "Heritage Gold Kada": ["Diam 58mm", "Diam 62mm", "Diam 66mm"],
-  "Traditional Gold Pendant": ["Standard"]
-};
-
-const templateDefaults = {
-  "Classic Solitaire Engagement Ring": { metal: "Gold", purity: "18K", weight: 4.5, gem: "None", size: "7", technique: "stone-setting", complexity: "medium" },
-  "Royal Filigree Bridal Set": { metal: "Gold", purity: "22K", weight: 35.0, gem: "Ruby", size: "Collar 420mm", technique: "filigree", complexity: "high" },
-  "Heritage Gold Kada": { metal: "Gold", purity: "22K", weight: 20.0, gem: "None", size: "Diam 62mm", technique: "polishing", complexity: "medium" },
-  "Traditional Gold Pendant": { metal: "Gold", purity: "22K", weight: 8.0, gem: "None", size: "Standard", technique: "engraving", complexity: "low" }
-};
 
 // Radial Gauges
 const gaugeSalesFill = document.getElementById('gaugeSalesFill');
@@ -91,7 +75,6 @@ let catalogTemplates = [];
 // Initialize
 window.addEventListener('DOMContentLoaded', () => {
   setupEventHandlers();
-  setupSpeechRecognition();
   // Fetch initial state
   fetchDashboardState().then(() => {
     populateTemplates();
@@ -197,14 +180,14 @@ function setupEventHandlers() {
     card.classList.add('active');
     selectedTemplate = card.dataset.template;
     
-    // Load defaults
-    const def = templateDefaults[selectedTemplate];
+    // Load defaults dynamically
+    const def = catalogTemplates.find(t => t.name === selectedTemplate);
     if (def) {
-      selectedMetal = def.metal;
-      selectedPurity = def.purity;
-      selectedGem = def.gem;
-      selectedSize = def.size;
-      document.getElementById('stdWeightG').value = def.weight;
+      selectedMetal = selectedTemplate.toLowerCase().includes('silver') ? 'Silver' : 'Gold';
+      selectedPurity = selectedMetal === 'Gold' ? (selectedTemplate.includes('Ring') ? '18K' : '22K') : 'Sterling 92.5%';
+      selectedGem = def.gemstone || 'None';
+      selectedSize = def.size || 'Standard';
+      document.getElementById('stdWeightG').value = def.weight_g;
       document.getElementById('stdComplexity').value = def.complexity;
       document.getElementById('stdTechnique').value = def.technique;
       
@@ -336,8 +319,6 @@ function setupEventHandlers() {
     fileInput.value = '';
   });
 
-  // Speech notes click
-  document.getElementById('notesVoiceBtn').addEventListener('click', toggleSpeechNotes);
 
   // Forms submit
   document.getElementById('stdIntakeForm').addEventListener('submit', handleStdSubmit);
@@ -486,15 +467,18 @@ function updateArtisansList(artisans) {
   });
 }
 
-// Populate design template cards at the bottom catalog panel
 let templatePopulated = false;
+
 function populateTemplates() {
   if (templatePopulated) return;
   
   const catalogList = document.getElementById('catalogContainer');
   catalogList.innerHTML = '';
   
-  catalogTemplates.forEach(t => {
+  const grid = document.getElementById('templatesGrid');
+  grid.innerHTML = '';
+  
+  catalogTemplates.forEach((t, idx) => {
     // Add item to list card
     const card = document.createElement('div');
     card.className = 'catalog-item';
@@ -520,7 +504,45 @@ function populateTemplates() {
     });
     
     catalogList.appendChild(card);
+
+    // Populate templatesGrid
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `template-card-btn ${idx === 0 ? 'active' : ''}`;
+    btn.dataset.template = t.name;
+    
+    let shortName = t.name.split(' ').slice(1).join(' ');
+    if (!shortName) shortName = t.name;
+    
+    btn.innerHTML = `
+      <span class="template-card-name">${shortName}</span>
+      <span class="template-card-desc">${t.weight_g}g · ${t.finish} · ${capitalize(t.technique)}</span>
+    `;
+    grid.appendChild(btn);
   });
+
+  // Append Custom Order Card trigger
+  const customBtn = document.createElement('button');
+  customBtn.type = 'button';
+  customBtn.className = 'template-card-btn custom-trigger-btn';
+  customBtn.id = 'customOrderCardBtn';
+  customBtn.innerHTML = `
+    <span class="template-card-name" style="color: var(--accent-gold);">Custom Order</span>
+    <span class="template-card-desc">Bespoke specs & uploads</span>
+  `;
+  grid.appendChild(customBtn);
+  
+  if (catalogTemplates.length > 0) {
+    selectedTemplate = catalogTemplates[0].name;
+    const def = catalogTemplates[0];
+    selectedMetal = selectedTemplate.toLowerCase().includes('silver') ? 'Silver' : 'Gold';
+    selectedPurity = selectedMetal === 'Gold' ? (selectedTemplate.includes('Ring') ? '18K' : '22K') : 'Sterling 92.5%';
+    selectedGem = def.gemstone || 'None';
+    selectedSize = def.size || 'Standard';
+    document.getElementById('stdWeightG').value = def.weight_g;
+    document.getElementById('stdComplexity').value = def.complexity;
+    document.getElementById('stdTechnique').value = def.technique;
+  }
   
   templatePopulated = true;
   updateCustPurityOptions();
@@ -564,13 +586,20 @@ function updateStdPurities() {
   });
 }
 
+function getSizesForTemplate(templateName) {
+  if (templateName.includes('Ring')) return ["5", "6", "7", "8", "9", "10"];
+  if (templateName.includes('Set')) return ["Collar 400mm", "Collar 420mm", "Collar 450mm"];
+  if (templateName.includes('Kada')) return ["Diam 58mm", "Diam 62mm", "Diam 66mm"];
+  return ["Standard"];
+}
+
 // Generate sizes chips dynamically based on template design
 function updateStdSizes() {
   const container = document.getElementById('stdSizeChips');
   if (!container) return;
   container.innerHTML = '';
   
-  const sizes = templateSizes[selectedTemplate] || ['Standard'];
+  const sizes = getSizesForTemplate(selectedTemplate);
   if (!sizes.includes(selectedSize)) selectedSize = sizes[0];
   
   sizes.forEach(s => {
@@ -776,51 +805,6 @@ function handleRefImageUpload(file) {
   });
 }
 
-// Voice note recognition capture setup
-function setupSpeechRecognition() {
-  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    console.log("Speech recognition not supported in this browser.");
-    return;
-  }
-  recognition = new SpeechRecognition();
-  recognition.continuous = false;
-  recognition.lang = 'en-US';
-  recognition.interimResults = false;
-  
-  recognition.onstart = () => {
-    document.getElementById('notesVoiceBtn').classList.add('listening');
-  };
-  
-  recognition.onend = () => {
-    document.getElementById('notesVoiceBtn').classList.remove('listening');
-  };
-  
-  recognition.onerror = (e) => {
-    console.error("Speech recognition error:", e);
-    document.getElementById('notesVoiceBtn').classList.remove('listening');
-  };
-  
-  recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
-    const txtArea = document.getElementById('custNotes');
-    txtArea.value = (txtArea.value + ' ' + transcript).trim();
-  };
-}
-
-// Toggle recording state
-function toggleSpeechNotes() {
-  if (!recognition) {
-    alert("Speech-to-text is not supported or initialized in this browser.");
-    return;
-  }
-  const btn = document.getElementById('notesVoiceBtn');
-  if (btn.classList.contains('listening')) {
-    recognition.stop();
-  } else {
-    recognition.start();
-  }
-}
 
 // Standard Intake form handler
 function handleStdSubmit(e) {
@@ -1100,62 +1084,135 @@ function handleHandoffSubmit(e) {
   });
 }
 
-// Render Order Receipt popup dialog
 function showOrderReceipt(orderId) {
-  const order = localLedgerCache.find(x => x.order_id === orderId);
-  if (!order) return;
-  
-  document.getElementById('rcptOrderType').textContent = order.resolution_pathway.toUpperCase();
-  document.getElementById('rcptOrderId').textContent = order.order_id;
-  document.getElementById('rcptCustomerName').textContent = order.customer_name;
-  document.getElementById('rcptSpecs').textContent = order.details;
-  
-  // Parse gemstone and size
-  const gemMatch = order.details.match(/Gem:\s*([A-Za-z]+)/);
-  const sizeMatch = order.details.match(/Size:\s*([^|]+)/);
-  const gemVal = gemMatch ? gemMatch[1] : "None";
-  const sizeVal = sizeMatch ? sizeMatch[1].trim() : "Standard";
-  
-  if (gemVal !== "None") {
-    document.getElementById('rcptGemRow').style.display = 'flex';
-    document.getElementById('rcptGemVal').textContent = `${gemVal}`;
-  } else {
-    document.getElementById('rcptGemRow').style.display = 'none';
-  }
-  
-  const mult = currentCurrency === 'USD' ? 1.0 : (currentSpot.usd_inr || 84.0);
-  const symb = currentCurrency === 'USD' ? '$' : '₹';
-  
-  document.getElementById('rcptSpotRate').textContent = `${symb}${(order.live_metal_rate * mult).toFixed(2)}`;
-  document.getElementById('rcptPathway').textContent = order.resolution_pathway;
-  document.getElementById('rcptTotalUsd').textContent = `$${order.final_price.toFixed(2)}`;
-  document.getElementById('rcptTotalInr').textContent = `₹${(order.final_price * (currentSpot.usd_inr || 84.0)).toFixed(2)}`;
-  
-  // Workshop slip Details
-  document.getElementById('rcptDeadline').textContent = "Allocated";
-  document.getElementById('rcptSize').textContent = sizeVal;
-  
-  // Render sketch preview if custom
-  const sketchRow = document.getElementById('rcptSketchRow');
-  if (activeTab === 'tab-custom' && customImageBase64) {
-    document.getElementById('rcptSketchImg').src = customImageBase64;
-    sketchRow.style.display = 'block';
-  } else {
-    sketchRow.style.display = 'none';
-  }
-  
-  // Search for matching artisan or standard specialty
-  const techniqueStr = order.details.includes('filigree') ? 'filigree' : 
-                      (order.details.includes('stone') ? 'stone-setting' : 
-                      (order.details.includes('engrav') ? 'engraving' : 'polishing'));
-  
-  document.getElementById('rcptArtisan').textContent = "Allocated Master Artisan";
-  
-  // Show Receipt modal overlay
-  document.getElementById('receiptOverlay').classList.add('active');
+  fetch(`/api/invoice/${orderId}`)
+  .then(r => {
+    if (!r.ok) throw new Error("Failed to load invoice details");
+    return r.json();
+  })
+  .then(order => {
+    document.getElementById('rcptOrderType').textContent = order.resolution_pathway.toUpperCase();
+    document.getElementById('rcptOrderId').textContent = order.order_id;
+    document.getElementById('rcptCustomerName').textContent = order.customer_name;
+    document.getElementById('rcptSpecs').textContent = order.details;
+    
+    // Parse gemstone and size
+    const gemMatch = order.details.match(/Gem:\s*([A-Za-z]+)/);
+    const sizeMatch = order.details.match(/Size:\s*([^|]+)/);
+    const gemVal = gemMatch ? gemMatch[1] : "None";
+    const sizeVal = sizeMatch ? sizeMatch[1].trim() : "Standard";
+    
+    // Render cost breakdown
+    const breakdown = renderCostBreakdown(order);
+    
+    if (breakdown.hasGem) {
+      document.getElementById('rcptGemRow').style.display = 'flex';
+      document.getElementById('rcptGemVal').textContent = `${breakdown.gemVal}`;
+    } else {
+      document.getElementById('rcptGemRow').style.display = 'none';
+    }
+    
+    document.getElementById('rcptSpotRate').textContent = breakdown.liveMetalRateConverted;
+    document.getElementById('rcptPathway').textContent = order.resolution_pathway;
+    document.getElementById('rcptTotalUsd').textContent = breakdown.finalPriceUSD;
+    document.getElementById('rcptTotalInr').textContent = breakdown.finalPriceConverted;
+    
+    // Workshop slip Details
+    document.getElementById('rcptDeadline').textContent = "Allocated";
+    document.getElementById('rcptSize').textContent = sizeVal;
+    
+    // Render sketch preview if custom
+    const sketchRow = document.getElementById('rcptSketchRow');
+    if (activeTab === 'tab-custom' && customImageBase64) {
+      document.getElementById('rcptSketchImg').src = customImageBase64;
+      sketchRow.style.display = 'block';
+    } else {
+      sketchRow.style.display = 'none';
+    }
+    
+    document.getElementById('rcptArtisan').textContent = "Allocated Master Artisan";
+    
+    // Invoice details
+    const invoice = order.invoice || {
+      invoice_id: `INV-${order.order_id}`,
+      payment_status: "unpaid",
+      amount_paid: 0.0,
+      tax_amount: 0.0,
+      paid_at: null
+    };
+    
+    const statusEl = document.getElementById('rcptPaymentStatus');
+    const paidEl = document.getElementById('rcptAmountPaid');
+    const paySection = document.getElementById('rcptRecordPaymentSection');
+    const payInput = document.getElementById('rcptPaymentInput');
+    const payBtn = document.getElementById('rcptRecordPaymentBtn');
+    
+    statusEl.textContent = invoice.payment_status.toUpperCase();
+    statusEl.className = `pathway-badge ${invoice.payment_status === 'paid' ? 'approved' : (invoice.payment_status === 'partial' ? 'auto' : 'rejected')}`;
+    
+    paidEl.textContent = `$${invoice.amount_paid.toFixed(2)}`;
+    
+    if (invoice.payment_status !== 'paid') {
+      paySection.style.display = 'block';
+      payInput.value = '';
+      const remaining = order.final_price - invoice.amount_paid;
+      payInput.max = remaining.toFixed(2);
+      payInput.placeholder = `Max $${remaining.toFixed(2)}`;
+      
+      payBtn.onclick = () => {
+        const amount = parseFloat(payInput.value);
+        if (isNaN(amount) || amount <= 0) {
+          alert("Please enter a valid payment amount.");
+          return;
+        }
+        if (amount > remaining) {
+          alert(`Payment exceeds remaining balance. Max allowed: $${remaining.toFixed(2)}`);
+          return;
+        }
+        
+        payBtn.disabled = true;
+        payBtn.textContent = '...';
+        
+        fetch('/api/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            order_id: order.order_id,
+            amount: amount
+          })
+        })
+        .then(res => {
+          if (!res.ok) {
+            return res.json().then(err => { throw new Error(err.detail || "Payment failed"); });
+          }
+          return res.json();
+        })
+        .then(() => {
+          // Re-render receipt
+          showOrderReceipt(order.order_id);
+          fetchDashboardState();
+        })
+        .catch(err => {
+          alert(err.message);
+        })
+        .finally(() => {
+          payBtn.disabled = false;
+          payBtn.textContent = 'Pay';
+        });
+      };
+    } else {
+      paySection.style.display = 'none';
+    }
+    
+    // Show Receipt modal overlay
+    document.getElementById('receiptOverlay').classList.add('active');
+  })
+  .catch(err => {
+    console.error("Receipt error:", err);
+    alert("Failed to load invoice details: " + err.message);
+  });
 }
 
-// Render Karigar handoff exception ticket pass
 function showHandoffReceipt(res) {
   document.getElementById('rcptOrderType').textContent = "KARIGAR HANDOFF PASS";
   document.getElementById('rcptOrderId').textContent = res.handoff_id;
@@ -1173,6 +1230,12 @@ function showHandoffReceipt(res) {
   document.getElementById('rcptDeadline').textContent = "Immediate Handoff";
   document.getElementById('rcptSize').textContent = "Bespoke Shape Mold Rebuild";
   document.getElementById('rcptSketchRow').style.display = 'none';
+  
+  // Hide invoice/payment fields in handoff receipt
+  document.getElementById('rcptRecordPaymentSection').style.display = 'none';
+  document.getElementById('rcptPaymentStatus').textContent = "TBD";
+  document.getElementById('rcptPaymentStatus').className = "pathway-badge auto";
+  document.getElementById('rcptAmountPaid').textContent = "$0.00";
   
   document.getElementById('receiptOverlay').classList.add('active');
 }
@@ -1318,13 +1381,14 @@ function toggleApprovalDrawer(pending) {
       backlogBadge.classList.add('status-red');
     }
     
-    // Populate pricing compare
-    drawerProposedVal.textContent = `$${pending.proposed_price.toFixed(2)}`;
-    drawerTrueCostVal.textContent = `$${pending.true_cost.toFixed(2)}`;
-    drawerSuggestedVal.textContent = `$${pending.suggested_price.toFixed(2)}`;
+    // Populate pricing compare using renderCostBreakdown
+    const breakdown = renderCostBreakdown(pending);
+    drawerProposedVal.textContent = breakdown.salesQuoteUSD;
+    drawerTrueCostVal.textContent = breakdown.trueCostUSD;
+    drawerSuggestedVal.textContent = breakdown.suggestedPriceUSD;
     
     // Populate adjacent Display and Input
-    document.getElementById('drawerSuggestedValDisplay').textContent = `$${pending.suggested_price.toFixed(2)}`;
+    document.getElementById('drawerSuggestedValDisplay').textContent = breakdown.suggestedPriceUSD;
     
     // Pre-fill Adjusted Price field with Sales agent's proposed price as visual anchor
     overrideAdjustedPrice.value = pending.proposed_price.toFixed(2);
@@ -1641,3 +1705,48 @@ function escapeHTML(str) {
     }[tag] || tag)
   );
 }
+
+function renderCostBreakdown(order) {
+  const mult = currentCurrency === 'USD' ? 1.0 : (currentSpot.usd_inr || 84.0);
+  const symb = currentCurrency === 'USD' ? '$' : '₹';
+  
+  const finalPrice = order.final_price !== undefined ? order.final_price : (order.proposed_price || 0.0);
+  const trueCost = order.true_cost || 0.0;
+  const suggestedPrice = order.suggested_price !== undefined ? order.suggested_price : (trueCost / 0.85);
+  const salesQuote = order.sales_quote !== undefined ? order.sales_quote : (order.proposed_price || 0.0);
+  
+  let liveMetalRate = order.live_metal_rate;
+  if (liveMetalRate === undefined) {
+    const metal = order.metal || 'Gold';
+    liveMetalRate = metal.toLowerCase() === 'gold' ? currentSpot.gold_usd_g : currentSpot.silver_usd_g;
+    if (order.karat_or_purity) {
+      let purityRatio = 1.0;
+      if (metal.toLowerCase() === 'gold') {
+        const karat = parseFloat(order.karat_or_purity.replace(/[^0-9.]/g, '')) || 22.0;
+        purityRatio = karat / 24.0;
+      } else {
+        if (order.karat_or_purity.includes('92.5')) purityRatio = 0.925;
+      }
+      liveMetalRate = liveMetalRate * purityRatio;
+    }
+  }
+
+  const details = order.details || `${order.weight_g}g ${order.karat_or_purity} ${order.metal} (${order.complexity}) | Gem: ${order.gemstone} | Size: ${order.size} | Finish: ${order.finish}`;
+  const gemMatch = details.match(/Gem:\s*([A-Za-z]+)/);
+  const gemVal = gemMatch ? gemMatch[1] : (order.gemstone || "None");
+
+  return {
+    finalPriceUSD: `$${finalPrice.toFixed(2)}`,
+    finalPriceConverted: `${symb}${(finalPrice * mult).toFixed(2)}`,
+    trueCostUSD: `$${trueCost.toFixed(2)}`,
+    trueCostConverted: `${symb}${(trueCost * mult).toFixed(2)}`,
+    suggestedPriceUSD: `$${suggestedPrice.toFixed(2)}`,
+    suggestedPriceConverted: `${symb}${(suggestedPrice * mult).toFixed(2)}`,
+    salesQuoteUSD: `$${salesQuote.toFixed(2)}`,
+    salesQuoteConverted: `${symb}${(salesQuote * mult).toFixed(2)}`,
+    liveMetalRateConverted: `${symb}${(liveMetalRate * mult).toFixed(2)}`,
+    gemVal: gemVal,
+    hasGem: gemVal !== "None"
+  };
+}
+
