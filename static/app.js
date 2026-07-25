@@ -1256,6 +1256,10 @@ function updateTerminalLogs(audit_log) {
       logTypeClass = 'log-txt-error';
     } else if (log.text.includes('Auto-executing') || log.text.includes('success') || log.text.includes('APPROVED')) {
       logTypeClass = 'log-txt-success';
+    } else if (log.text.includes('Negotiation Cap Hit') || log.text.includes('cap_hit') || log.text.includes('CAP HIT')) {
+      logTypeClass = 'log-txt-cap-hit';
+    } else if (log.text.includes('fallback') || log.text.includes('FALLBACK') || log.text.includes('falling back')) {
+      logTypeClass = 'log-txt-fallback';
     } else if (log.text.includes('Routing') || log.text.includes('deficit') || log.text.includes('Safety verification lock')) {
       logTypeClass = 'log-txt-warning';
     }
@@ -1405,6 +1409,50 @@ function toggleApprovalDrawer(pending) {
     document.querySelectorAll('#overrideReasonChips .chip-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById('overrideOptionalNote').value = '';
     document.getElementById('overrideMemo').value = '';
+    
+    // Render negotiation log bubbles
+    const logContainer = document.getElementById('drawerNegotiationLog');
+    if (logContainer) {
+      logContainer.innerHTML = '';
+      const log = pending.negotiation_log || [];
+      if (log.length === 0) {
+        logContainer.innerHTML = '<div class="light-text" style="font-size: 0.7rem; text-align: center;">No negotiation log available.</div>';
+      } else {
+        log.forEach(turn => {
+          const bubble = document.createElement('div');
+          
+          // Class based on turn properties
+          bubble.className = `negotiation-bubble agent-${turn.agent.toLowerCase()} turn-${turn.turn_type}`;
+          if (turn.agent === 'System' || turn.turn_type === 'cap_hit') {
+            bubble.className = `negotiation-bubble turn-system-cap_hit`;
+          } else if (turn.turn_type === 'fallback') {
+            bubble.className = `negotiation-bubble turn-fallback`;
+          }
+          
+          // Format timestamp nicely
+          let timeStr = "";
+          if (turn.timestamp) {
+            try {
+              const dt = new Date(turn.timestamp);
+              timeStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            } catch (e) {
+              timeStr = turn.timestamp;
+            }
+          }
+          
+          bubble.innerHTML = `
+            <div class="bubble-meta">
+              <span>${turn.agent} (${turn.turn_type.toUpperCase()}) - Round ${turn.round}</span>
+              <span class="bubble-time">${timeStr}</span>
+            </div>
+            <div class="bubble-text">${escapeHTML(turn.text)}</div>
+          `;
+          logContainer.appendChild(bubble);
+        });
+        // Auto-scroll to the bottom of the container
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+    }
     
   } else {
     // Close drawer

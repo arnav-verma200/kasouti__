@@ -69,6 +69,7 @@ ENV/
 
 # Local runtime data
 data/ledger.json
+.env
 
 # Local runtime upload data
 static/uploads/
