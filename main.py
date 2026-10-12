@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Gemini Client Setup
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") 
 gemini_client = None
 if GEMINI_API_KEY:
     try:
@@ -57,9 +57,6 @@ class NegotiationTurn(BaseModel):
 
 app = FastAPI(title="Kasauti — Agentic Retail OS")
 
-# Helper to get the correct model
-def get_llm_model_name() -> str:
-    return "gemini-3.5-flash"
 
 # Rule-Based fallback logic for Sales Agent
 def run_rule_based_sales(req_data: dict, costing_pushback: str = None, production_pushback: str = None, suggested_price: float = None) -> SalesDraft:
@@ -448,12 +445,7 @@ def get_dashboard():
 
 @app.get("/api/external/spot-rates")
 def get_external_spot_rates():
-    return {
-        "gold_usd_g": state["spot"]["gold_usd_g"],
-        "silver_usd_g": state["spot"]["silver_usd_g"],
-        "usd_inr": state["spot"]["usd_inr"],
-        "feed_online": state["spot"]["feed_online"]
-    }
+    return state["spot"]
 
 @app.post("/api/config")
 def post_config(req: ConfigRequest):
